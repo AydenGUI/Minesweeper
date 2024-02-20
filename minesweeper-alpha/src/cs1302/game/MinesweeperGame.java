@@ -272,16 +272,78 @@ public class MinesweeperGame {
      * @return boom True if bomb was revealed, false if not
      */
     public boolean reveal(int row, int col) {
-        roundsCompleted ++;
+        //roundsCompleted ++;
         boolean boom = false;
         if (getGame()[row][col] == true) {
             printLoss();
             boom = true;
         } else {
-            setDisplay(row, col, count(row,col));
+            if (count(row,col).equals("0")) {
+                setDisplay(row, col, count(row,col));
+                //reveals all 0's touching
+                // System.out.println("Nested Reveal");
+                boolean isColGreater = col > 0;
+                boolean isColLess = col < this.cols - 1;
+                if (row > 0) {
+                    reveal_connected_zeros(row-1, col, "u", "");
+                    if (isColGreater)
+                        reveal_connected_zeros(row-1, col-1, "ul", "");
+                    if (isColLess)
+                        reveal_connected_zeros(row-1, col+1, "ur", "");
+                }
+                if (row < this.rows - 1) {
+                    reveal_connected_zeros(row+1, col, "d", "");
+                    if (isColGreater)
+                        reveal_connected_zeros(row+1, col-1, "dl", "");
+                    if (isColLess)
+                        reveal_connected_zeros(row+1, col+1, "dr", "");
+                }
+                if (isColGreater)
+                    reveal_connected_zeros(row, col-1, "l", "");
+                if (isColLess)
+                    reveal_connected_zeros(row, col+1, "r", "");
+            }
+            else setDisplay(row, col, count(row,col));
         } // if
         return boom;
     } // reveal
+
+    /**
+     * This method performs the function of revealing every tile surrounding a 
+     * 0 numbered title. This is the normal auto clear zeros's feature of Minesweeper.
+     * @param row Row index
+     * @param col Column index
+     * @param direction Direction that recursive called moved in table
+     * @param oldDirection The previous direction that recursive called moved in table
+     */
+    public void reveal_connected_zeros(int row, int col, String direction, String oldDirection) {
+        if (displayBoard[row][col]!=null) //if already displayed
+            return;
+        setDisplay(row, col, count(row,col));
+        if (!count(row,col).equals("0"))
+            return;
+        boolean isColGreater = col > 0 && !direction.contains("r")&& !oldDirection.contains("r");
+                boolean isColLess = col < this.cols - 1&& !direction.contains("l")&& !oldDirection.contains("l");
+                if (row > 0 && !direction.contains("d") && !oldDirection.contains("d")) {
+                    reveal_connected_zeros(row-1, col, "u", direction);
+                    if (isColGreater)
+                        reveal_connected_zeros(row-1, col-1, "ul", direction);
+                    if (isColLess)
+                        reveal_connected_zeros(row-1, col+1, "ur", direction);
+                }
+                if (row < this.rows - 1 && !direction.contains("u") && !oldDirection.contains("u")) {
+                    reveal_connected_zeros(row+1, col, "d", direction);
+                    if (isColGreater)
+                        reveal_connected_zeros(row+1, col-1, "dl", direction);
+                    if (isColLess)
+                        reveal_connected_zeros(row+1, col+1, "dr", direction);
+                }
+                if (isColGreater)
+                    reveal_connected_zeros(row, col-1, "l", direction);
+                if (isColLess)
+                    reveal_connected_zeros(row, col+1, "r", direction);
+    } // reveal_connected_zeros
+    
 
     /**
      * Marks the specified square as potentially having a bomb.
@@ -476,6 +538,7 @@ public class MinesweeperGame {
             this.mark(row,col);
             break;
         case "r": case "reveal":
+            roundsCompleted ++;
             if (this.reveal(row,col)) {
                 doContinue = false;
             } // if
